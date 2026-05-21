@@ -2,6 +2,9 @@ from pydantic import BaseModel
 from fastapi import FastAPI
 from typing import Optional
 
+from ollama import chat
+from ollama import ChatResponse
+
 app = FastAPI()
 
 class Post(BaseModel):
@@ -9,6 +12,7 @@ class Post(BaseModel):
     title: str
     content: str
     author: str
+    summary: Optional[str] = None
 
 class PostUpdate(BaseModel):
     title: Optional[str] = None
@@ -29,6 +33,23 @@ comments = list()
 
 @app.post("/posts/")
 def create_post(post: Post):
+    
+    # ollama API를 사용하여 게시물 요약 생성
+    response: ChatResponse = chat(model='gemma4:e4b ', messages=[
+    {
+        'role': 'user',
+        'content': '제목: {title}\n내용: {content}\n작성자: {author}\n\n이 게시물의 요약을 3문장으로 작성해줘.'.format(
+            title=post.title,
+            content=post.content,
+            author=post.author
+        ),
+    },
+    ])
+    print("summary: " + response['message']['content'])
+    
+    # 게시물 요약을 Post 객체에 저장
+    post.summary = response.message.content
+    
     posts.append(post)
     return post
 
