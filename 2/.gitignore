@@ -15,4 +15,7 @@ __pycache__/
 .vscode/
 .idea/
 
+# DB files
+*.db
+
 .
